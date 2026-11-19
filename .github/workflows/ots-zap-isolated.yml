@@ -1,0 +1,57 @@
+name: OTS Isolated OWASP ZAP Baseline
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '40 17 * * 2'
+permissions:
+  contents: read
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test app
+        run: python -m pip install -e .
+      - name: Start isolated localhost test server
+        shell: bash
+        run: |
+          set -euo pipefail
+          export JARVIS_PORT=18745
+          export JARVIS_DATA_DIR="$RUNNER_TEMP/jarvis-zap"
+          export TANDM_DATABASE="$RUNNER_TEMP/tandm-zap.sqlite3"
+          export TANDM_ORIGIN=http://127.0.0.1:18745
+          mkdir -p "$RUNNER_TEMP/jarvis-zap"
+          nohup python run_jarvis.py --no-browser > "$RUNNER_TEMP/app-zap-server.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/zap-app.pid"
+          for i in $(seq 1 35); do
+            if curl --silent --fail http://127.0.0.1:18745/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          echo "::error::Isolated test server failed to start"
+          exit 1
+      - name: Passive OWASP ZAP scan against local app only
+        shell: bash
+        run: |
+          docker run --rm --network host -v "$RUNNER_TEMP:/zap/wrk:rw" \
+            ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t http://127.0.0.1:18745 -m 1 -I -J zap.json -r zap.html
+      - name: Upload test scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ots-jarvis-zap-report
+          path: |
+            ${{ runner.temp }}/zap.json
+            ${{ runner.temp }}/zap.html
+          if-no-files-found: warn
+          retention-days: 5
+      - name: Stop test server
+        if: always()
+        run: |
+          if test -f "$RUNNER_TEMP/zap-app.pid"; then kill "$(cat "$RUNNER_TEMP/zap-app.pid")" || true; fi
