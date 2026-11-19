@@ -31,3 +31,12 @@ Get-FileHash dist/OTS-Jarvis.exe -Algorithm SHA256
 **Note:** Pin/toolchain chosen for repeatability, not a claim of Windows compatibility; validate availability and license before use. PyInstaller is a free open-source tool, but runner minutes, signing certificate and hardware may cost money. The workflow in `.github/workflows/windows-build.yml` is **manual only** and cannot automatically publish a release. It must not be run without confirming GitHub Actions budget/usage authorization.
 
 **Version:** Source `0.1.0a2` development; no Git tag. **Artifact SHA:** N/A — no executable produced here. **Human release owner:** Ohana Tech Solutions, signoff pending. **Rollback:** retain a verified prior installer and back up per-user DB before any upgrade; clean install and restore procedure yet to be validated.
+
+## Limited Windows portable EXE pilot — evidence, not general release
+
+- [x] Windows x64 CI build and process/localhost health smoke succeeded: https://github.com/ohanatechsolutions/OTS-Jarvis/actions/runs/44469707466
+- [x] Downloaded binary checked as AMD64 PE32+ executable, 10,371,842 bytes; SHA-256 `2bc33db96ce172b4900f7ad57b3f876922468e08ec00e88b9007ae6facb30216` agrees with CI generated hash.
+- [ ] Clean Windows 11 user-profile launch, login, action approvals and shutdown verified on owner's hardware.
+- [ ] Windows SmartScreen/Defender observations, dependencies/licensing/unsigned-warning acceptance, real local Qwen, NUC and additional agent-security gates.
+- [ ] Installer/uninstaller/upgrade/restore testing: **N/A for the current portable EXE pilot**; required before a real installer release.
+- **General release status remains NO-GO.** No public GitHub release created. Artifact is temporarily available through GitHub Actions under the passing run, not a production distribution.

@@ -22,3 +22,12 @@
 | E-008 | Model/GPU benchmark, power, context, concurrent staff | NOT RUN | **NOT RUN** — no NUC or real 9B runtime | NFR performance gate open |
 
 **Interpretation:** The passing tests include an end-to-end **API** request that traverses real HTTP, SQLite and a *fake* local model HTTP endpoint. It is *not* a full working Jarvis agent, actual model test, Windows installation test or approved release.
+
+## E-018 — Actual Windows x64 executable CI build (2026-11-19 UTC)
+
+- Public-repository standard `windows-latest` hosted runner, Python 3.13, PyInstaller 6.15.0. GitHub Actions run: https://github.com/ohanatechsolutions/OTS-Jarvis/actions/runs/44469707466 — **SUCCESS** on build branch `exe-pilot-build-20261118`, commit `f09d43bebbae1eb455da989a51c038813ec32ff3`.
+- Windows unit/HTTP integration suite, PyInstaller one-file executable packaging, executable startup and localhost `/api/health` smoke check, and SHA-256 generation: workflow completed successfully.
+- Artifact `OTS-Jarvis-Windows-pilot-unsigned`, ID `14503159770`; ZIP artifact expires 2026-12-03 UTC.
+- Downloaded executable `OTS-Jarvis.exe` independently inspected: 10,371,842 bytes; `MZ` and `PE\\0\\0` headers, AMD64 machine `0x8664`, PE32+ `0x20b`. SHA-256 `2bc33db96ce172b4900f7ad57b3f876922468e08ec00e88b9007ae6facb30216` matches the workflow-generated checksum. Download ZIP SHA-256 was independently recorded by GitHub: `5457657bfaa116d8c7085a3d34a175908f41e5451f3a83ae9ae6808b90faa393`.
+- **Not run:** clean Windows user-device double-click/login UAT, SmartScreen/Defender reputation, real Jan/Qwen runner, NUC performance, Windows install/uninstall (portable executable, not an installer), multiuser/remote/security production gates. Unsigned. **NO-GO for general release; suitable as a limited pilot for owner-supervised testing**.
+- Prior first Windows build run `44469467231` failed a real duplicate-port security test because Windows allows socket reuse differently. Remediated by `SO_EXCLUSIVEADDRUSE` and disabling address reuse; passing subsequent run `44469707466`. Test was not skipped.
