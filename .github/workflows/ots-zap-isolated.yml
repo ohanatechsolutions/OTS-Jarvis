@@ -1,6 +1,9 @@
 name: OTS Isolated OWASP ZAP Baseline
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ots-zap-isolated.yml']
   schedule:
     - cron: '40 17 * * 2'
 permissions:
@@ -43,6 +46,7 @@ jobs:
             -t http://127.0.0.1:18745 -m 1 -I -J zap.json -r zap.html
       - name: Upload test scan report
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ots-jarvis-zap-report
