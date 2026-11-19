@@ -9,6 +9,29 @@
 - Planned Intel NUC 12 Enthusiast i7-12700H, Intel Arc A770M 16 GB, 32 GB RAM, 1 TB SSD. Preferred Qwen3.5 9B. **Real performance and GPU support not yet measured**.
 - Current Windows pilot remains a one-admin loopback application. Not a distributed multiuser agent.
 
+## Final selected shortlist — exactly 10
+
+**Decision origin:** Latest 45-plus-tool evaluation narrowed to **10 selected candidates** (not 10 already-installed dependencies). This section is the authoritative selected set. Runtime prerequisites like Qwen3.5 9B, a local inference runner, SQLite, Playwright and WireGuard are *supporting infrastructure*, not replacements for or additions to these 10 decisions.
+
+| # | Selected tool | Intended role | Integration priority | Verified in Jarvis repo? |
+|---|---|---|---|---|
+| 1 | **Nous Research Hermes Agent** | Local-first agent/controller with explicit Jarvis-side approval policy | P1, after local runner contract | **No** — model/tool compatibility and security gates |
+| 2 | **Scrapling** | Permitted read-only website extraction | P2, after knowledge pipeline | **No** — license/website rules and isolation review |
+| 3 | **Hex** | Optional local speech dictation interface | P3 | **No** — evaluate offline requirements and correct upstream project |
+| 4 | **NVIDIA OpenShell** | Sandboxed agent/worker execution | P1 architecture; NUC/Linux validation later | **No** — Linux environment required for actual evaluation |
+| 5 | **CC Safety Net** | Additional command execution guard | P2 | **No** — compatibility and deny-policy testing needed |
+| 6 | **TruffleHog** | Source/repository secret scanning | P0 developer security tooling | **No** — scan evidence not yet collected |
+| 7 | **NVIDIA SkillSpector** | Vet third-party agent skills prior to installation | P1 before imported skills | **No** — prevent external/cloud analysis by default |
+| 8 | **Pangolin Community Edition** | Conditional remote access option | P3 after MFA/device security | **No** — verify CE licensing and network exposure; WireGuard remains simpler baseline |
+| 9 | **GitHub Spec Kit** | Development-time spec workflow, not shipped in Jarvis | P2 optional | **No** — current five-source framework already governs work |
+| 10 | **Unsloth** | Optional local model fine-tuning if evaluations justify it | P4 | **No** — unnecessary for initial AI/automation milestone |
+
+**Selection vs deployment:** A tool may be *selected* but **not ready to install** on the current Windows pilot. OpenShell, Pangolin and Unsloth are explicitly environment- or phase-dependent. The preferred local model and existing Jarvis authorization gateway remain prerequisites, and Hermes is conditional on actual hardware/model compatibility.
+
+**Not members of the selected ten:** Jan/Qwen3.5 (model runtime), Playwright (browser adapter), WireGuard (network transport), SQLite (storage), restic (backup), Semgrep/OSV (supplementary CI). These may still be useful supporting components; do not present them as extra adopted items from the original ten. Paid hosted platforms remain excluded.
+
+**Immediate executable slice:** `I-001` authenticated loopback Jan adapter with model discovery, status/test connection control and negative security tests. It can be coded and contract-tested before NUC arrival, with a real model smoke test deferred. Then introduce Hermes behind the *existing Jarvis approval boundary*, without granting arbitrary OS/network access.
+
 ## Tools and integration disposition
 
 | Layer | Preferred component | Disposition now | Why / integration gate |
