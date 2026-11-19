@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="art/header-dark.png">
+  <img alt="OTS Jarvis" src="art/header-light.png">
+</picture>
+
 # OTS Jarvis
 
 **Self-hosted AI assistance for business workflows — early local pilot.** By Ohana Tech Solutions.
