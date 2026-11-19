@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>OTS Jarvis · Local Pilot</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="bar"><strong>OTS <span>Jarvis</span></strong><span class="subtle">Local-first assistant · Pilot</span><button id="logout" hidden>Sign out</button></header>
+  <main>
+    <section id="setup" class="panel" hidden>
+      <h1>Set up your local administrator</h1>
+      <p>Enrollment is available only once. Choose a unique password of at least 12 characters.</p>
+      <form id="setup-form"><label>Username<input name="username" required minlength="3" maxlength="32" autocomplete="username"></label><label>Password<input name="password" type="password" required minlength="12" autocomplete="new-password"></label><button type="submit">Create administrator</button></form>
+    </section>
+    <section id="login" class="panel" hidden>
+      <h1>Sign in to Jarvis</h1>
+      <form id="login-form"><label>Username<input name="username" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label><button type="submit">Sign in</button></form>
+    </section>
+    <section id="assistant" hidden>
+      <div class="intro"><div><h1>Assistant</h1><p>This pilot sends prompts only to your configured local model. It cannot take actions on your computer.</p></div><span id="identity" class="user"></span></div>
+      <form id="task-form" class="panel">
+        <label for="prompt">What would you like Jarvis to help with?</label>
+        <textarea id="prompt" name="prompt" rows="5" maxlength="8000" required placeholder="Draft a friendly reply to a customer inquiry…"></textarea>
+        <div class="actions"><label for="effort">Response depth</label><select id="effort" name="effort"><option value="auto" selected>Auto</option><option value="low">Quick</option><option value="medium">Balanced</option><option value="high">Detailed</option></select><button id="ask" type="submit">Ask local model</button></div>
+      </form>
+      <div id="reply-panel" class="panel" hidden><h2>Response</h2><pre id="reply"></pre></div>
+      <section class="panel"><h2>Recent requests</h2><p class="subtle">Stored on this device for up to seven days. Replies are not sent to cloud AI.</p><div id="history" class="history" aria-live="polite"></div></section>
+    </section>
+    <p id="status" role="status" aria-live="polite" class="status"></p>
+  </main>
+</body>
+</html>

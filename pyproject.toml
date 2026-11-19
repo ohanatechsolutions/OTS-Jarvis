@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=75,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ots-jarvis"
+version = "0.1.0a1"
+description = "Privacy-first local business assistant pilot"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ots-jarvis = "jarvis.server:main"
+
+[tool.setuptools]
+packages = ["jarvis"]
+
+[tool.setuptools.package-data]
+jarvis = ["web/*.html", "web/*.css", "web/*.js"]
