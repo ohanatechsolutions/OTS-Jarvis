@@ -39,6 +39,24 @@ jobs:
       - name: Record binary hash
         shell: pwsh
         run: (Get-FileHash 'dist/OTS-Jarvis.exe' -Algorithm SHA256).Hash | Out-File 'dist/OTS-Jarvis.exe.sha256'
+      - name: Independently verify the packaged executable and SHA-256
+        shell: pwsh
+        run: |
+          $file = 'dist/OTS-Jarvis.exe'
+          $hashFile = 'dist/OTS-Jarvis.exe.sha256'
+          if (-not (Test-Path $file) -or -not (Test-Path $hashFile)) { throw 'Missing executable or checksum' }
+          $actual = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+          $expected = (Get-Content -LiteralPath $hashFile -Raw).Trim()
+          if ($expected -notmatch '^[a-fA-F0-9]{64}
+        with:
+          name: OTS-Jarvis-Windows-pilot-unsigned
+          path: |
+            dist/OTS-Jarvis.exe
+            dist/OTS-Jarvis.exe.sha256
+          if-no-files-found: error
+ -or $actual -ne $expected) { throw 'Executable checksum mismatch' }
+          if ((Get-Item $file).Length -lt 100000) { throw 'Executable is suspiciously small' }
+          Write-Host 'Executable size and SHA-256 verified against the build output'
       - uses: actions/upload-artifact@v4
         with:
           name: OTS-Jarvis-Windows-pilot-unsigned
