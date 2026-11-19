@@ -1,6 +1,11 @@
-name: Windows Pilot Build (manual, no publish)
+name: Windows Pilot EXE Build (no publish)
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - exe-pilot-build-20261118
+    paths:
+      - '.github/workflows/windows-build.yml'
 permissions:
   contents: read
 jobs:
@@ -42,6 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: OTS-Jarvis-Windows-pilot-unsigned
+          retention-days: 14
           path: |
             dist/OTS-Jarvis.exe
             dist/OTS-Jarvis.exe.sha256
