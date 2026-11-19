@@ -2,11 +2,11 @@
 
 **Updated:** 2026-11-18 HST. **Owner:** Ohana Tech Solutions. **Baseline:** Newly established source pilot; earlier v0.2.0 installer ZIP and Git bundle exist in Library but raw bytes were unavailable to the active workspace. This code is a distinct reconstructed pilot baseline, not an asserted import of that historical code.
 
-**GitHub:** `ohanatechsolutions/OTS-Jarvis`; default branch `main`. **Source test environment:** Linux, Python 3.13.5. **Windows pre-release:** NO-GO.
+**GitHub:** `ohanatechsolutions/OTS-Jarvis`; default branch `main`. **Source test environment:** Linux, Python 3.13.5. **Windows pre-release:** NO-GO. **Python wheel:** clean isolated venv install/HTTP asset smoke PASS (E-009); not an `.exe`.
 
 | Requirement | Status | Evidence/limitation | Next |
 |---|---|---|---|
-| REQ-001 local admin enrollment | IN PROGRESS | Automated store+HTTP tests PASS; manual browser UAT not run | Test on clean Windows profile |
+| REQ-001 local admin enrollment | IN PROGRESS | Automated store+HTTP tests PASS incl. first-run setup code; manual browser UAT not run | Test on clean Windows profile |
 | REQ-002 login/session/logout | IN PROGRESS | Automated HTTP tests PASS; Windows browser UAT pending | Manual auth/expiry tests |
 | REQ-003 local AI inference adapter | IN PROGRESS | Contract tests PASS against fake localhost runner; **real Qwen NOT RUN** | Configure local runner and benchmark |
 | REQ-004 local task history | IN PROGRESS | API/store tests PASS; purge at restart only | Verify restart/retention behavior |

@@ -8,6 +8,7 @@
 | Evidence | Check | Command | Observed result | Scope |
 |---|---|---|---|---|
 | E-001 | Unit + HTTP integration/negative tests | `PYTHONPATH=. python -W error::ResourceWarning -m unittest discover -s tests -v` | **PASS: 8 tests, 0 failures**, 2.6 seconds | Admin setup, auth, logout, model contract, unavailable model, URL/Host/Origin denial, schema guard, AUTO selection; fake local runner |
+| E-009 | Installed-wheel smoke test | `python tests/smoke_installed.py` after `python -m pip wheel --no-deps --no-build-isolation . -w dist` | **PASS:** isolated venv offline wheel install, running server, health, HTML and JS assets | Real installed Python distribution; no model or Windows tests |
 | E-002 | JavaScript syntax | `node --check jarvis/web/app.js` | **PASS** | Syntax only; not browser functional UAT |
 | E-003 | Python compile | `python -m compileall -q jarvis` | **PASS** | Imports/syntax; not packaging/installer |
 | E-004 | Actual local model inference | NOT RUN | **NOT RUN** — real Qwen3.5 9B and NUC unavailable | P0 runtime acceptance still open |

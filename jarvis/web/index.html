@@ -12,8 +12,8 @@
   <main>
     <section id="setup" class="panel" hidden>
       <h1>Set up your local administrator</h1>
-      <p>Enrollment is available only once. Choose a unique password of at least 12 characters.</p>
-      <form id="setup-form"><label>Username<input name="username" required minlength="3" maxlength="32" autocomplete="username"></label><label>Password<input name="password" type="password" required minlength="12" autocomplete="new-password"></label><button type="submit">Create administrator</button></form>
+      <p>Enrollment is available only once. Enter the setup code from the local Jarvis server console and choose a unique password of at least 12 characters.</p>
+      <form id="setup-form"><label>Local setup code<input name="setup_code" required autocomplete="off" spellcheck="false"></label><label>Username<input name="username" required minlength="3" maxlength="32" autocomplete="username"></label><label>Password<input name="password" type="password" required minlength="12" autocomplete="new-password"></label><button type="submit">Create administrator</button></form>
     </section>
     <section id="login" class="panel" hidden>
       <h1>Sign in to Jarvis</h1>

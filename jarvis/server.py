@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import secrets
+import hmac
 import threading
 from email.message import Message
 from http import HTTPStatus
@@ -34,6 +36,7 @@ class JarvisServer(ThreadingHTTPServer):
         self.settings = settings
         self.store = Store(settings.data_dir / "jarvis.sqlite3")
         self.store.purge_expired()
+        self.setup_token = secrets.token_urlsafe(24) if not self.store.has_admin() else None
         self.model_semaphore = threading.BoundedSemaphore(1)
         self.login_lock = threading.Lock()
         self.login_attempts: list[float] = []
@@ -166,9 +169,17 @@ class JarvisHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
 
     def _setup(self, data: dict) -> None:
-        if set(data) != {"username", "password"} or not all(isinstance(x, str) for x in data.values()):
-            raise ValueError("Username and password are required")
+        if set(data) != {"username", "password", "setup_code"} or not all(isinstance(x, str) for x in data.values()):
+            raise ValueError("Username, password and setup code are required")
+        expected = self.server.setup_token
+        if expected is None:
+            self._json(HTTPStatus.CONFLICT, {"error": "Administrator already enrolled"})
+            return
+        if not hmac.compare_digest(data["setup_code"], expected):
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Invalid local setup code"})
+            return
         if self.server.store.enroll(data["username"], data["password"]):
+            self.server.setup_token = None
             self._json(HTTPStatus.CREATED, {"ok": True, "next": "login"})
         else:
             self._json(HTTPStatus.CONFLICT, {"error": "Administrator already enrolled"})
@@ -227,6 +238,9 @@ def main() -> None:
     with JarvisServer(("127.0.0.1", settings.port), settings) as app:
         url = f"http://127.0.0.1:{app.server_port}/"
         print(f"Jarvis listening locally at {url}", flush=True)
+        if app.setup_token:
+            print(f"One-time local administrator setup code: {app.setup_token}", flush=True)
+            print("Keep this code private; enter it in the first-run dashboard.", flush=True)
         if not args.no_browser:
             import webbrowser
             webbrowser.open(url)

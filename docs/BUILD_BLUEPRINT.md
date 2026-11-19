@@ -12,13 +12,13 @@ Jarvis is a self-hosted, local-first AI business assistant that helps small busi
 
 **Not in this pilot:** workforce accounts/MFA, remote/VPN access, live desktop control, browser action tools, editable knowledge base, voice, TanDM/Gmail/Sheets/Canva connectors, background activity monitoring, cloud inference, verified savings accounting, automatic updater, packaged appliance and general commercial licensing. Each remains in the backlog below.
 
-**Success:** The first admin can enroll and sign in; authenticated prompt reaches a real local compatible runner and returns/stores its output; errors/denials are clear; no external cloud calls or unapproved actions occur; tests and an install/rollback procedure are documented. Hardware performance goal >=35 tokens/s (prefer >=40) is aspirational until measured on the NUC, not a product claim.
+**Success:** The first admin can enroll with a one-time local console code and sign in; authenticated prompt reaches a real local compatible runner and returns/stores its output; errors/denials are clear; no external cloud calls or unapproved actions occur; tests and an install/rollback procedure are documented. Hardware performance goal >=35 tokens/s (prefer >=40) is aspirational until measured on the NUC, not a product claim.
 
 ## B. User experience and acceptance journeys
 
 **Screens:** local Jarvis web dashboard (`/`), one-time admin enrollment, sign-in, assistant form, local response, recent history, sign out. Responsive for desktop and mobile-sized local browsers, visible focus indicators, semantic labels, ARIA status. No decorative controls. UI is dark-mode only in pilot.
 
-1. **New administrator:** Open localhost dashboard -> enrollment shown only if no accounts exist -> enter valid username and 12–256 character password -> account persisted with PBKDF2 hash -> login screen. Invalid fields show validation; second enrollment is rejected.
+1. **New administrator:** Open localhost dashboard -> enrollment shown only if no accounts exist -> enter the one-time code shown on the local server console, valid username and 12–256 character password -> account persisted with PBKDF2 hash -> login screen. Invalid fields show validation; second enrollment is rejected.
 2. **Returning administrator:** Sign in -> authenticated cookie -> prompt entry, AUTO/Low/Medium/High response depth -> submit -> busy indicator -> local runner request -> display reply -> latest history. Invalid prompt/depth or concurrent model call is rejected; offline runner shows recoverable error and failed history item.
 3. **Sign out:** Click sign out -> session revoked -> assistant and history are not accessible without login. Browser refresh returns to login.
 4. **No network/runner:** Dashboard remains local; local runner failures do not initiate any external connection. Status shows failure. Retry requires a new explicit submission.
@@ -31,7 +31,7 @@ Jarvis is a self-hosted, local-first AI business assistant that helps small busi
 
 | ID | Priority | Trigger → validation → action/output | Acceptance / verification |
 |---|---|---|---|
-| REQ-001 | P0 | First run, valid admin credentials -> atomic enrollment/password hashing | One account only; second enrollment 409; invalid credentials rejected. `StoreTests`, `HTTPTests` |
+| REQ-001 | P0 | First run, valid admin credentials -> atomic enrollment/password hashing | One account only; invalid/missing setup code forbidden, second enrollment 409; invalid credentials rejected. `StoreTests`, `HTTPTests` |
 | REQ-002 | P0 | Login/logout -> session issue/revoke; cookie HttpOnly/SameSite | Unauthenticated 401; successful login allows history; logout revokes token. `StoreTests`, `HTTPTests` |
 | REQ-003 | P0 | Prompt and mode -> length/permission validation -> one local OpenAI-compatible inference request -> output/error | Valid prompt returns model reply; invalid blocked; offline 502; no cloud fallback. `ConfigTests`, `HTTPTests` |
 | REQ-004 | P0 | Task processed -> SQLite result, depth, user and timestamp | Latest 20 sorted by ID, user ownership, local seven-day expiry; failed requests tracked. `StoreTests`, `HTTPTests` |
@@ -51,7 +51,7 @@ Jarvis is a self-hosted, local-first AI business assistant that helps small busi
 ## D. Nonfunctional requirements
 
 - **Platforms:** Source pilot Python >=3.11; tested in Linux Python 3.13 only; intended Windows 11 x64 pending real install tests. Browser: current Chromium/Edge/Firefox pending manual UAT. Server interface always `127.0.0.1`.
-- **Privacy/security:** Local model endpoint restricted to loopback HTTP; never accept arbitrary provider URLs; no telemetry, cloud API or third-party tokens. Admin passwords hashed with PBKDF2-HMAC-SHA256; sessions use random 256-bit token hashed at rest; sessions last up to eight hours; auth/login rate-limited in-process; basic origin/host checks, same-origin CSP. No SSL on loopback; MUST NOT internet-expose. Windows account/storage permissions and at-rest encryption NOT VERIFIED.
+- **Privacy/security:** Local model endpoint restricted to loopback HTTP; never accept arbitrary provider URLs; no telemetry, cloud API or third-party tokens. Enrollment requires a random single-use setup code shown only in the local console; admin passwords hashed with PBKDF2-HMAC-SHA256; sessions use random 256-bit token hashed at rest; sessions last up to eight hours; auth/login rate-limited in-process; basic origin/host checks, same-origin CSP. No SSL on loopback; MUST NOT internet-expose. Windows account/storage permissions and at-rest encryption NOT VERIFIED.
 - **Retention:** Local prompt/response history expires after seven days at process startup. No export/delete UI yet; manual database reset documented. Backups/restore must be tested before any production use; this pilot is for synthetic or non-sensitive data only.
 - **Reliability:** Fail closed for remote runner endpoints; bounded 30 s model calls; single concurrent model request with HTTP 429 busy feedback. No hidden unbounded retries. Error messages exclude prompt content. Graceful Ctrl+C. Actual model speed and recovery NOT VERIFIED.
 - **Accessibility:** Native form controls, keyboard focus, ARIA live status, visible validation, responsive layout. Screen-reader and small-window testing remain open.

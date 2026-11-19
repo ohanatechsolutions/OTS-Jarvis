@@ -138,7 +138,7 @@ class HTTPTests(unittest.TestCase):
         return result_tuple
 
     def login(self):
-        self.assertEqual(self.request("POST", "/api/setup", {"username":"admin", "password":"correct-long-password"})[0], 201)
+        self.assertEqual(self.request("POST", "/api/setup", {"username":"admin", "password":"correct-long-password", "setup_code":self.app.setup_token})[0], 201)
         self.assertEqual(self.request("POST", "/api/login", {"username":"admin", "password":"correct-long-password"})[0], 200)
 
     def test_browser_workflow_real_http_and_mock_model(self):
@@ -160,8 +160,9 @@ class HTTPTests(unittest.TestCase):
 
     def test_auth_csrf_enrollment_and_input_denials(self):
         self.assertEqual(self.request("POST", "/api/tasks", {"prompt":"hi", "effort":"low"})[0], 401)
+        self.assertEqual(self.request("POST", "/api/setup", {"username":"admin", "password":"correct-long-password", "setup_code":"wrong"})[0], 403)
         self.login()
-        self.assertEqual(self.request("POST", "/api/setup", {"username":"other", "password":"other-long-password"})[0], 409)
+        self.assertEqual(self.request("POST", "/api/setup", {"username":"other", "password":"other-long-password", "setup_code":"guess"})[0], 409)
         self.assertEqual(self.request("POST", "/api/tasks", {"prompt":"", "effort":"low"})[0], 400)
         self.assertEqual(self.request("POST", "/api/tasks", {"prompt":"x"*8001, "effort":"low"})[0], 400)
         self.assertEqual(self.request("POST", "/api/tasks", {"prompt":"hello", "effort":"super"})[0], 400)

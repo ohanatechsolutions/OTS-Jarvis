@@ -35,7 +35,7 @@ export JARVIS_MODEL=qwen3.5-9b   # actual model name may differ
 python -m jarvis
 ```
 
-Open `http://127.0.0.1:8745/`. First visit creates the administrator. Model unavailable? The UI stays usable for enrollment/login/history and displays a clear offline error after a request. The pilot doesn't download a model or run without an installed runner.
+Open `http://127.0.0.1:8745/`. On first launch, the **local console prints a one-time setup code**. Enter that code in the administrator enrollment form; do not share it. Once enrolled, later starts do not print a setup code. Model unavailable? The UI stays usable for enrollment/login/history and displays a clear offline error after a request. The pilot doesn't download a model or run without an installed runner.
 
 Config: `JARVIS_PORT` (default 8745), `JARVIS_DATA_DIR` (per-user state), `JARVIS_MODEL`, `JARVIS_MODEL_ENDPOINT` (local URL `/v1`). Only `http://localhost`, `http://127.0.0.1` or IPv6 loopback are accepted for the model endpoint. Changing `JARVIS_PORT` requires choosing an available local port.
 
@@ -45,6 +45,8 @@ Config: `JARVIS_PORT` (default 8745), `JARVIS_DATA_DIR` (per-user state), `JARVI
 python -m unittest discover -s tests -v
 python -m compileall -q jarvis
 node --check jarvis/web/app.js  # if Node is installed
+python -m pip wheel --no-deps --no-build-isolation . -w dist
+python tests/smoke_installed.py  # isolated virtualenv smoke test
 ```
 
 The HTTP integration tests use a **synthetic local model server**: they validate the API contract but **do not prove a real Qwen model, Windows installer or actual GPU performance**. Windows build instructions are in [Release Checklist](docs/RELEASE_CHECKLIST.md). No cloud API, paid service or telemetry is required by the application.
