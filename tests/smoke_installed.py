@@ -13,9 +13,11 @@ from pathlib import Path
 
 def main():
     root = Path(__file__).resolve().parents[1]
-    wheels = list((root / "dist").glob("ots_jarvis-*.whl"))
+    import tomllib
+    version = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+    wheels = list((root / "dist").glob(f"ots_jarvis-{version}-*.whl"))
     if len(wheels) != 1:
-        raise RuntimeError("Exactly one locally built Jarvis wheel required")
+        raise RuntimeError(f"Exactly one Jarvis {version} wheel required")
     with tempfile.TemporaryDirectory(prefix="jarvis-wheel-smoke-") as tmp:
         t = Path(tmp)
         venv.EnvBuilder(with_pip=True).create(t / "venv")
@@ -39,7 +41,7 @@ def main():
                     time.sleep(0.15)
             else:
                 raise TimeoutError("Installed Jarvis health endpoint not responding")
-            assert health["status"] == "ok" and health["version"] == "0.1.0a1"
+            assert health["status"] == "ok" and health["version"] == version
             with urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=2) as response:
                 assert b"OTS Jarvis" in response.read()
             with urllib.request.urlopen(f"http://127.0.0.1:{port}/app.js", timeout=2) as response:

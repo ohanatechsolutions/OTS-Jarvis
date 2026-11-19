@@ -59,6 +59,7 @@ Small businesses spend time switching between inboxes, websites, calendars, and 
 3. **Choose response depth:** Submit a prompt with **AUTO**, **Low**, **Medium**, or **High**. AUTO selects an output-token budget using deterministic prompt rules; it does **not** enable a verified model-specific reasoning mode.
 4. **Ask the local model:** Jarvis sends the request to a **separately installed**, OpenAI-compatible, loopback-only model runner. The pilot has no cloud inference fallback.
 5. **View the outcome:** The browser displays the reply or a recoverable error. SQLite stores local task history with a seven-day expiry policy, applied at service startup.
+6. **Approve local note actions:** On the supervised-actions panel, propose a note and review its full contents. Nothing is saved until the administrator clicks **Approve & save**. You can cancel a pending note, undo a completed save, or pause new actions. Model text never directly calls tools.
 
 ```text
 Local browser (127.0.0.1)
@@ -82,7 +83,7 @@ See the [architecture and acceptance requirements](docs/BUILD_BLUEPRINT.md) for 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
 | Core service | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/python/python-original.svg" alt="Python" width="22" height="22" /> **Python 3.11+** | Standard-library HTTP service, authentication, and model adapter |
-| Local persistence | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg" alt="SQLite" width="22" height="22" /> **SQLite** | Administrator, session, and prompt/reply task storage |
+| Local persistence | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg" alt="SQLite" width="22" height="22" /> **SQLite** | Administrator, session, prompt history, pending approvals, notes and redacted action audit |
 | Browser interface | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg" alt="JavaScript" width="22" height="22" /> **HTML, CSS, JavaScript** | Local dashboard, enrollment, login, prompt entry, and history |
 | AI connection | **OpenAI-compatible local HTTP API** | Sends requests to an independently installed local inference runner |
 | Packaging | **setuptools; PyInstaller recipe** | Python source/wheel distribution; Windows executable build instructions are present but unverified |
@@ -143,11 +144,11 @@ python tests/smoke_installed.py
 
 The Node.js check is optional if Node is installed. The wheel step requires an appropriate local Python build toolchain; installation of build tools is not performed automatically.
 
-**Test scope:** The recorded automated HTTP integration tests use a **synthetic local model server**, not a real Qwen model. The recorded isolated wheel smoke test is not a Windows installer test. Review [Test Evidence](docs/TEST_EVIDENCE.md) and the [Windows Release Checklist](docs/RELEASE_CHECKLIST.md) before treating this as deployable software.
+**Test scope:** The recorded automated HTTP integration tests use a **synthetic local model server**, not a real Qwen model. The recorded isolated wheel smoke test is not a Windows installer test. Manual Chromium browser automation was blocked by the current execution environment (`ERR_BLOCKED_BY_ADMINISTRATOR`); normal Windows browser UAT remains necessary. Review [Test Evidence](docs/TEST_EVIDENCE.md) and the [Windows Release Checklist](docs/RELEASE_CHECKLIST.md) before treating this as deployable software.
 
 ### Security & data handling
 
-The current pilot binds to `127.0.0.1`, checks local origins/hosts, hashes administrator passwords, and uses HttpOnly SameSite session cookies. Requests and model responses have size/time/concurrency limits. **Prompt and reply history is stored without database encryption.** Use only synthetic or non-sensitive data while encryption, backup/recovery, privacy controls, and independent security review remain incomplete.
+The current pilot binds to `127.0.0.1`, checks local origins/hosts, hashes administrator passwords, and uses HttpOnly SameSite session cookies. Requests and model responses have size/time/concurrency limits. **Prompt, reply and saved-note text is stored without database encryption.** Use only synthetic or non-sensitive data while encryption, backup/recovery, privacy controls, and independent security review remain incomplete.
 
 ---
 
@@ -159,7 +160,8 @@ Roadmap boxes describe **repository-verified source functionality** versus work 
 - [x] **Assistant foundation:** Local model adapter, AUTO/Low/Medium/High output budgets, and SQLite task history implemented.
 - [x] **Automated pilot checks:** Recorded Linux unit/HTTP integration tests and isolated Python-wheel smoke tests passed using a synthetic model endpoint.
 - [ ] **Real model and hardware verification:** Test Qwen3.5 9B on the intended Intel NUC 12, including latency, tokens/sec, GPU usage, memory, and recovery.
-- [ ] **Secure agent actions:** Implement preview, human approval, permission isolation, audit logs, cancellation, and tests against prompt-injection/tool misuse.
+- [x] **Limited local approval workflow (code + automated HTTP tests):** Exact-preview `save_note` proposals, explicit administrator approval, atomic note creation, cancel, undo, pause/resume, expiry and redacted audit.
+- [ ] **Broader secure agent actions:** Implement and independently verify safely sandboxed tools, controlled model-to-tool orchestration, revocation, user-acceptance and security tests. The limited note workflow is not a general autonomous agent.
 - [ ] **Staff and remote access:** Implement approved-device access, role permissions, MFA, and authenticated remote connectivity.
 - [ ] **ICF business knowledge and connectors:** Add an approved local knowledge base and supervised Gmail/Sheets/website/TanDM workflows.
 - [ ] **Windows distribution:** Build and independently test a real executable, installation, upgrade, rollback, and integrity verification.

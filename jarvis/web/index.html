@@ -20,13 +20,29 @@
       <form id="login-form"><label>Username<input name="username" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label><button type="submit">Sign in</button></form>
     </section>
     <section id="assistant" hidden>
-      <div class="intro"><div><h1>Assistant</h1><p>This pilot sends prompts only to your configured local model. It cannot take actions on your computer.</p></div><span id="identity" class="user"></span></div>
+      <div class="intro"><div><h1>Assistant</h1><p>Assistant replies come from your configured local model. Separate local note actions require your explicit approval; Jarvis cannot execute computer, web or business tools.</p></div><span id="identity" class="user"></span></div>
       <form id="task-form" class="panel">
         <label for="prompt">What would you like Jarvis to help with?</label>
         <textarea id="prompt" name="prompt" rows="5" maxlength="8000" required placeholder="Draft a friendly reply to a customer inquiry…"></textarea>
         <div class="actions"><label for="effort">Response depth</label><select id="effort" name="effort"><option value="auto" selected>Auto</option><option value="low">Quick</option><option value="medium">Balanced</option><option value="high">Detailed</option></select><button id="ask" type="submit">Ask local model</button></div>
       </form>
       <div id="reply-panel" class="panel" hidden><h2>Response</h2><pre id="reply"></pre></div>
+      <section class="panel" id="action-workspace" aria-labelledby="action-title">
+        <div class="intro"><div><h2 id="action-title">Supervised local actions</h2>
+          <p class="subtle">Only "Save a local note" is enabled. Review the complete content before approval. Notes are stored unencrypted on this device until undone; do not enter secrets.</p></div>
+          <button type="button" id="pause-actions" class="secondary" aria-pressed="false">Pause actions</button>
+        </div>
+        <form id="note-form">
+          <label for="note-text">Note to save locally</label>
+          <textarea id="note-text" name="text" rows="3" required maxlength="4000" placeholder="Write a note for your private local workspace…"></textarea>
+          <button type="submit" id="propose-note">Preview action</button>
+        </form>
+        <h3>Awaiting approval</h3>
+        <div id="action-queue" class="history" aria-live="polite"></div>
+        <h3>Saved notes</h3>
+        <div id="notes" class="history" aria-live="polite"></div>
+        <details><summary>Action audit history</summary><div id="action-audit" class="history"></div></details>
+      </section>
       <section class="panel"><h2>Recent requests</h2><p class="subtle">Stored on this device for up to seven days. Replies are not sent to cloud AI.</p><div id="history" class="history" aria-live="polite"></div></section>
     </section>
     <p id="status" role="status" aria-live="polite" class="status"></p>

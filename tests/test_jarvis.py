@@ -92,7 +92,7 @@ class StoreTests(unittest.TestCase):
             Store(self.store.path)
 
 
-class HTTPTests(unittest.TestCase):
+class HTTPHarness:
     @classmethod
     def setUpClass(cls):
         cls.fake = ThreadingHTTPServer(("127.0.0.1", 0), FakeLocalRunner)
@@ -141,6 +141,7 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(self.request("POST", "/api/setup", {"username":"admin", "password":"correct-long-password", "setup_code":self.app.setup_token})[0], 201)
         self.assertEqual(self.request("POST", "/api/login", {"username":"admin", "password":"correct-long-password"})[0], 200)
 
+class HTTPTests(HTTPHarness, unittest.TestCase):
     def test_browser_workflow_real_http_and_mock_model(self):
         self.assertEqual(self.request("GET", "/api/me")[1]["enrollment_required"], True)
         self.assertEqual(self.request("GET", "/")[0], 200)
@@ -177,6 +178,172 @@ class HTTPTests(unittest.TestCase):
         self.assertEqual(status, 502)
         self.assertEqual(response["state"], "failed")
         self.assertEqual(self.request("GET", "/api/tasks")[1]["tasks"][0]["state"], "failed")
+
+
+
+
+class ActionStoreTests(unittest.TestCase):
+    """Exercise genuine SQLite transactions and migration without model stubs."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.path = Path(self.temp.name) / "jarvis.sqlite3"
+        self.store = Store(self.path)
+        self.assertTrue(self.store.enroll("admin", "correct-long-password"))
+        self.user_id = self.store.current_user(self.store.authenticate("admin", "correct-long-password"))["id"]
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_pending_is_no_side_effect_until_explicit_approval_and_undo(self):
+        plan = self.store.propose_note(self.user_id, "Private research note")
+        snapshot = self.store.action_snapshot(self.user_id)
+        self.assertEqual(snapshot["notes"], [])
+        self.assertEqual(snapshot["actions"][0]["preview"], "Private research note")
+        self.assertEqual(snapshot["events"][0]["event"], "proposed")
+        result = self.store.transition_action(self.user_id, plan["id"], "approve")
+        self.assertEqual(result["state"], "completed")
+        snapshot = self.store.action_snapshot(self.user_id)
+        self.assertEqual(snapshot["notes"][0]["text"], "Private research note")
+        self.assertIsNone(snapshot["actions"][0]["preview"])
+        with self.assertRaises(Exception) as ctx:
+            self.store.transition_action(self.user_id, plan["id"], "approve")
+        self.assertEqual(type(ctx.exception).__name__, "ActionConflict")
+        self.assertEqual(len(self.store.action_snapshot(self.user_id)["notes"]), 1)
+        self.assertEqual(self.store.transition_action(self.user_id, plan["id"], "undo")["state"], "undone")
+        self.assertEqual(self.store.action_snapshot(self.user_id)["notes"], [])
+        with self.assertRaises(Exception) as ctx:
+            self.store.transition_action(self.user_id, plan["id"], "undo")
+        self.assertEqual(type(ctx.exception).__name__, "ActionConflict")
+        actions = self.store.action_snapshot(self.user_id)
+        self.assertEqual([a["event"] for a in actions["events"][:3]],
+                         ["undone", "approved_and_executed", "proposed"])
+        self.assertNotIn("Private research note", str(actions["events"]))
+
+    def test_cancel_expiry_pause_and_wrong_owner_fail_closed(self):
+        first = self.store.propose_note(self.user_id, "cancel me")["id"]
+        self.assertEqual(self.store.transition_action(self.user_id, first, "cancel")["state"], "cancelled")
+        with self.assertRaises(Exception):
+            self.store.transition_action(self.user_id, first, "approve")
+        second = self.store.propose_note(self.user_id, "expire me")["id"]
+        with self.store.connect() as db:
+            db.execute("UPDATE action_requests SET expires_at=0 WHERE id=?", (second,))
+        with self.assertRaises(Exception):
+            self.store.transition_action(self.user_id, second, "approve")
+        self.assertEqual(self.store.action_snapshot(self.user_id)["actions"][0]["state"], "expired")
+        third = self.store.propose_note(self.user_id, "pause me")["id"]
+        self.assertTrue(self.store.set_actions_paused(self.user_id, True))
+        with self.assertRaises(Exception):
+            self.store.propose_note(self.user_id, "blocked")
+        with self.assertRaises(Exception):
+            self.store.transition_action(self.user_id, third, "approve")
+        self.assertEqual(self.store.transition_action(self.user_id, third, "cancel")["state"], "cancelled")
+        self.assertFalse(self.store.set_actions_paused(self.user_id, False))
+        with self.assertRaises(LookupError):
+            self.store.transition_action(999, first, "undo")
+        self.assertEqual(self.store.action_snapshot(self.user_id)["notes"], [])
+
+    def test_reopen_v2_database_and_reject_future_schema(self):
+        action = self.store.propose_note(self.user_id, "persistent")
+        reopened = Store(self.path)
+        self.assertEqual(reopened.transition_action(self.user_id, action["id"], "approve")["state"], "completed")
+        self.assertEqual(Store(self.path).action_snapshot(self.user_id)["notes"][0]["text"], "persistent")
+        with reopened.connect() as db:
+            db.execute("PRAGMA user_version=99")
+        with self.assertRaises(RuntimeError):
+            Store(self.path)
+
+
+class ActionHTTPTests(HTTPHarness, unittest.TestCase):
+    """Real HTTP+SQLite routes; fake model never participates in approvals."""
+
+    def test_actions_require_admin_and_reject_invalid_or_cross_origin(self):
+        payload = {"kind": "save_note", "text": "Private local note"}
+        self.assertEqual(self.request("GET", "/api/actions")[0], 401)
+        self.assertEqual(self.request("POST", "/api/actions/propose", payload)[0], 401)
+        self.login()
+        self.assertEqual(self.request("POST", "/api/actions/propose", payload, {"Origin":"http://malicious.example"})[0], 403)
+        self.assertEqual(self.request("POST", "/api/actions/propose", {"kind":"shell", "text":"whoami"})[0], 400)
+        self.assertEqual(self.request("POST", "/api/actions/propose", {"kind":"save_note", "text":""})[0], 400)
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":True,"decision":"approve"})[0], 400)
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":999,"decision":"approve"})[0], 404)
+        self.assertEqual(self.request("POST", "/api/actions/pause", {"paused":"true"})[0], 400)
+        self.assertEqual(self.request("POST", "/api/actions/propose", {"kind":"save_note", "text":"X" * 4001})[0], 400)
+
+    def test_approval_cancel_undo_pause_and_logout_real_http(self):
+        self.login()
+        code, proposal, _ = self.request("POST", "/api/actions/propose", {"kind":"save_note", "text":"Meeting checklist"})
+        self.assertEqual(code, 201)
+        self.assertEqual(self.request("GET", "/api/actions")[1]["notes"], [])
+        self.assertEqual(self.request("POST", "/api/actions/pause", {"paused":True})[0], 200)
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":proposal["id"], "decision":"approve"})[0], 409)
+        self.assertEqual(self.request("POST", "/api/actions/pause", {"paused":False})[0], 200)
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":proposal["id"], "decision":"approve"})[1]["state"], "completed")
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":proposal["id"], "decision":"approve"})[0], 409)
+        snap = self.request("GET", "/api/actions")[1]
+        self.assertEqual(snap["notes"][0]["text"], "Meeting checklist")
+        self.assertEqual(snap["notes"][0]["action_id"], proposal["id"])
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":proposal["id"], "decision":"undo"})[1]["state"], "undone")
+        self.assertEqual(self.request("GET", "/api/actions")[1]["notes"], [])
+        second = self.request("POST", "/api/actions/propose", {"kind":"save_note", "text":"cancel"})[1]["id"]
+        self.assertEqual(self.request("POST", "/api/actions/decision", {"id":second, "decision":"cancel"})[1]["state"], "cancelled")
+        self.assertEqual(self.request("POST", "/api/logout")[0], 200)
+        self.cookie = None
+        self.assertEqual(self.request("GET", "/api/actions")[0], 401)
+
+
+class ActionSafetyTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.path = Path(self.temp.name) / "jarvis.sqlite3"
+        self.store = Store(self.path)
+        self.store.enroll("admin", "long-private-test-password")
+        self.uid = self.store.current_user(self.store.authenticate("admin", "long-private-test-password"))["id"]
+
+    def tearDown(self):
+        self.temp.cleanup()
+
+    def test_double_approval_race_creates_exactly_one_note(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from jarvis.actions import ActionConflict
+        id_ = self.store.propose_note(self.uid, "must be created once")["id"]
+        def approve(_):
+            try:
+                self.store.transition_action(self.uid, id_, "approve")
+                return "completed"
+            except ActionConflict:
+                return "conflict"
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = sorted(pool.map(approve, [1, 2]))
+        self.assertEqual(outcomes, ["completed", "conflict"])
+        self.assertEqual(len(self.store.action_snapshot(self.uid)["notes"]), 1)
+
+    def test_migration_from_real_previous_v1_and_restart_recovery(self):
+        action = self.store.propose_note(self.uid, "existing note")
+        with self.store.connect() as db:
+            db.execute("DROP TABLE action_events")
+            db.execute("DROP TABLE action_requests")
+            db.execute("DROP TABLE action_controls")
+            db.execute("DROP TABLE notes")
+            db.execute("PRAGMA user_version=1")
+        migration = Store(self.path)
+        self.assertEqual(migration.action_snapshot(self.uid)["actions"], [])
+        self.assertEqual(migration.propose_note(self.uid, "new note")["state"], "pending")
+        with migration.connect() as db:
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone()[0], 2)
+        id_ = migration.add_task(self.uid, "Unfinished request", "low")
+        migration.purge_expired()
+        self.assertEqual(migration.history(self.uid)[0]["state"], "failed")
+        self.assertIn("Interrupted", migration.history(self.uid)[0]["result"])
+
+    def test_undo_preserved_after_old_action_audit_purge(self):
+        id_ = self.store.propose_note(self.uid, "saved for months")["id"]
+        self.store.transition_action(self.uid, id_, "approve")
+        with self.store.connect() as db:
+            db.execute("UPDATE action_requests SET updated_at=1 WHERE id=?", (id_,))
+        self.store.purge_expired()
+        self.assertEqual(self.store.transition_action(self.uid, id_, "undo")["state"], "undone")
+        self.assertEqual(self.store.action_snapshot(self.uid)["notes"], [])
 
 
 if __name__ == "__main__":

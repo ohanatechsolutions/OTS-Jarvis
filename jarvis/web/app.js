@@ -25,7 +25,7 @@ async function refresh() {
     else {
       $('identity').textContent = data.user.username;
       show('assistant');
-      await history();
+      await Promise.all([history(), refreshActions()]);
     }
   } catch (e) { state(e.message, true); }
 }
@@ -43,7 +43,7 @@ $('login-form').addEventListener('submit', async e => {
   catch (err) { state(err.message,true); }
 });
 $('logout').addEventListener('click', async () => {
-  try { await call('/api/logout','POST');$('reply-panel').hidden=true;state('Signed out.');await refresh(); }
+  try { await call('/api/logout','POST');$('reply-panel').hidden=true;$('action-queue').replaceChildren();$('notes').replaceChildren();$('action-audit').replaceChildren();state('Signed out.');await refresh(); }
   catch (err) { state(err.message,true); }
 });
 $('task-form').addEventListener('submit', async e => {
@@ -68,3 +68,84 @@ async function history() {
   } catch (e) {state(e.message,true);}
 }
 refresh();
+
+// Local action execution is strictly a separate, explicit user interaction;
+// model replies are displayed as plain text and never invoked as tools.
+function actionButton(label, onClick, className='secondary') {
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = className; button.textContent = label;
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try { await onClick(); await refreshActions(); }
+    catch (err) { state(err.message, true); }
+    finally { button.disabled = false; }
+  });
+  return button;
+}
+async function decideAction(id, decision) {
+  const result = await call('/api/actions/decision', 'POST', {id,decision});
+  state(`Action ${id}: ${result.state}.`);
+}
+async function refreshActions() {
+  try {
+    const data = await call('/api/actions');
+    const pause = $('pause-actions');
+    pause.textContent = data.paused ? 'Resume actions' : 'Pause actions';
+    pause.setAttribute('aria-pressed', String(data.paused));
+    $('propose-note').disabled = data.paused;
+    const queue = $('action-queue'); queue.replaceChildren();
+    const pending = data.actions.filter(action => action.state === 'pending');
+    if (!pending.length) queue.textContent = 'No pending actions.';
+    for (const action of pending) {
+      const article = document.createElement('article');
+      const header = document.createElement('small');
+      header.textContent = `Action #${action.id} · local note · expires ${new Date(action.expires_at * 1000).toLocaleTimeString()}`;
+      const preview = document.createElement('pre');preview.textContent = action.preview;
+      const buttons = document.createElement('div');buttons.className = 'inline-buttons';
+      buttons.append(
+        actionButton('Approve & save', () => decideAction(action.id,'approve'),'primary'),
+        actionButton('Cancel', () => decideAction(action.id,'cancel'))
+      );
+      article.append(header, preview, buttons);queue.append(article);
+    }
+    const notes = $('notes');notes.replaceChildren();
+    if (!data.notes.length) notes.textContent = 'No saved notes.';
+    for (const note of data.notes) {
+      const article=document.createElement('article');
+      const date=document.createElement('small');date.textContent=new Date(note.created_at*1000).toLocaleString();
+      const value=document.createElement('pre');value.textContent=note.text;
+      const actionId=note.action_id;
+      article.append(date,value);
+      if (actionId) article.append(actionButton('Undo save',()=>decideAction(actionId,'undo')));
+      notes.append(article);
+    }
+    const audit = $('action-audit');audit.replaceChildren();
+    if (!data.events.length) audit.textContent='No action events.';
+    for (const entry of data.events) {
+      const line=document.createElement('p');
+      line.textContent=`${new Date(entry.created_at*1000).toLocaleString()} · ${entry.action_id ? `#${entry.action_id} · ` : ''}${entry.event.replaceAll('_',' ')}`;
+      audit.append(line);
+    }
+  } catch (err) { state(err.message, true); }
+}
+$('note-form').addEventListener('submit',async e => {
+  e.preventDefault(); const button=$('propose-note');button.disabled=true;
+  try {
+    const text=$('note-text').value;
+    const action=await call('/api/actions/propose','POST',{kind:'save_note',text});
+    $('note-text').value='';
+    state(`Action #${action.id} proposed. Review its contents below; nothing was saved yet.`);
+    await refreshActions();
+  } catch (err) { state(err.message,true); }
+  finally { if ($('pause-actions').getAttribute('aria-pressed') !== 'true') button.disabled=false; }
+});
+$('pause-actions').addEventListener('click',async () => {
+  const button=$('pause-actions');button.disabled=true;
+  const paused=button.getAttribute('aria-pressed')!=='true';
+  try {
+    await call('/api/actions/pause','POST',{paused});
+    state(paused ? 'Action execution paused. Pending actions can still be cancelled.' : 'Action execution resumed.');
+    await refreshActions();
+  } catch (err) { state(err.message,true); }
+  finally {button.disabled=false;}
+});
