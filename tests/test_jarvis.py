@@ -336,6 +336,15 @@ class ActionSafetyTests(unittest.TestCase):
         self.assertEqual(migration.history(self.uid)[0]["state"], "failed")
         self.assertIn("Interrupted", migration.history(self.uid)[0]["result"])
 
+    def test_duplicate_server_port_does_not_recover_active_task(self):
+        settings = Settings(Path(self.temp.name), "unused", ModelTarget("127.0.0.1", 1, "/v1/chat/completions"), 0)
+        with JarvisServer(("127.0.0.1", 0), settings) as active:
+            task = active.store.add_task(self.uid, "in flight", "low")
+            with self.assertRaises(OSError):
+                JarvisServer(("127.0.0.1", active.server_port), settings)
+            self.assertEqual(active.store.history(self.uid)[0]["id"], task)
+            self.assertEqual(active.store.history(self.uid)[0]["state"], "running")
+
     def test_undo_preserved_after_old_action_audit_purge(self):
         id_ = self.store.propose_note(self.uid, "saved for months")["id"]
         self.store.transition_action(self.uid, id_, "approve")

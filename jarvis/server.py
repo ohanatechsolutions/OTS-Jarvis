@@ -34,14 +34,21 @@ class JarvisServer(ThreadingHTTPServer):
         # Always bind to loopback, even when called by an embedder.
         if address[0] != "127.0.0.1":
             raise ValueError("Jarvis only supports the 127.0.0.1 interface")
-        self.settings = settings
-        self.store = Store(settings.data_dir / "jarvis.sqlite3")
-        self.store.purge_expired()
-        self.setup_token = secrets.token_urlsafe(24) if not self.store.has_admin() else None
-        self.model_semaphore = threading.BoundedSemaphore(1)
-        self.login_lock = threading.Lock()
-        self.login_attempts: list[float] = []
+        # Reserve the listening socket before touching persistent data. A
+        # duplicate launch on the same port must never alter the active app's
+        # task state or run startup recovery unexpectedly.
         super().__init__(address, JarvisHandler)
+        try:
+            self.settings = settings
+            self.store = Store(settings.data_dir / "jarvis.sqlite3")
+            self.store.purge_expired()
+            self.setup_token = secrets.token_urlsafe(24) if not self.store.has_admin() else None
+            self.model_semaphore = threading.BoundedSemaphore(1)
+            self.login_lock = threading.Lock()
+            self.login_attempts: list[float] = []
+        except Exception:
+            self.server_close()
+            raise
 
 
 class JarvisHandler(BaseHTTPRequestHandler):

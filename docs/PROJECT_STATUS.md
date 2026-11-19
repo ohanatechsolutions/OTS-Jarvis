@@ -9,7 +9,7 @@
 | REQ-001 local admin enrollment | IN PROGRESS | Automated store+HTTP tests PASS incl. first-run setup code; manual browser UAT not run | Test on clean Windows profile |
 | REQ-002 login/session/logout | IN PROGRESS | Automated HTTP tests PASS; Windows browser UAT pending | Manual auth/expiry tests |
 | REQ-003 local AI inference adapter | IN PROGRESS | Contract tests PASS against fake localhost runner; **real Qwen NOT RUN** | Configure local runner and benchmark |
-| REQ-004 local task history | IN PROGRESS | HTTP/store tests PASS; restart now marks interrupted model tasks failed | Verify seven-day retention and recovery on Windows |
+| REQ-004 local task history | IN PROGRESS | HTTP/store tests PASS; restart now marks interrupted model tasks failed, after binding socket to avoid corrupting an active same-port instance | Verify seven-day retention and recovery on Windows |
 | REQ-005 local URL security | IN PROGRESS | Negative URL/Origin/Host checks PASS | Independent security review |
 | REQ-006 UI/accessibility | IN PROGRESS | HTML/CSS/JS implemented; JS syntax checked | Manual keyboard/mobile/screen-reader UAT |
 | REQ-007 deterministic AUTO routing | IN PROGRESS | Unit/integration PASS | Confirm UX with owner on real model |
