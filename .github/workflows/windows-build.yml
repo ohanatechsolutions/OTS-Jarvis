@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 jobs:
   build:
     runs-on: windows-latest
@@ -57,6 +59,19 @@ jobs:
  -or $actual -ne $expected) { throw 'Executable checksum mismatch' }
           if ((Get-Item $file).Length -lt 100000) { throw 'Executable is suspiciously small' }
           Write-Host 'Executable size and SHA-256 verified against the build output'
+      - name: Sign build provenance attestation
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: 'dist/OTS-Jarvis.exe'
+      - name: Independently verify GitHub artifact attestation
+        if: ${{ github.event_name != 'pull_request' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify 'dist/OTS-Jarvis.exe' --repo $env:GITHUB_REPOSITORY
+          if ($LASTEXITCODE -ne 0) { throw 'Build provenance attestation could not be verified' }
       - uses: actions/upload-artifact@v4
         with:
           name: OTS-Jarvis-Windows-pilot-unsigned
