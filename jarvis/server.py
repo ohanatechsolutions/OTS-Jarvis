@@ -6,6 +6,7 @@ import argparse
 import json
 import logging
 import secrets
+import socket
 import hmac
 import threading
 from email.message import Message
@@ -29,6 +30,17 @@ MAX_BODY = 32768
 
 class JarvisServer(ThreadingHTTPServer):
     daemon_threads = True
+    # Prevent a second process from binding this local service port.
+    allow_reuse_address = False
+    allow_reuse_port = False
+
+    def server_bind(self) -> None:
+        # On Windows SO_REUSEADDR may permit a second bind; exclusive mode
+        # protects the active local service from port takeover.
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+        if exclusive is not None:
+            self.socket.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+        super().server_bind()
 
     def __init__(self, address: tuple[str, int], settings: Settings):
         # Always bind to loopback, even when called by an embedder.
