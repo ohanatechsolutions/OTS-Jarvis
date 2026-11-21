@@ -101,4 +101,6 @@ Environment variables: `JARVIS_PORT` default 8745, `JARVIS_DATA_DIR` default per
 6. **M5 Windows productization + real NUC:** per-user install, clean Win11 run/uninstall, Qwen 9B hardware benchmark, offline recovery, signed update/rollback. Gate: real `.exe`, SHA256, install logs, acceptance UAT, human security/release GO.
 7. **M6 Impact/voice/commercial:** revocable opt-in observer, task savings proof, voice, commercial packaging only after data privacy and legal review.
 
+**Mandatory final integrated launch milestone M7 (owner-approved 2026-11-20 HST):** Brain, Shield, Decoy, Secured Pathway and Bouncer are locked deployment components. All FP-01–FP-08 gates in [Five-Pillar Launch Gate](FIVE_PILLAR_LAUNCH_GATE.md) must pass before final launch; existing localhost pilot scope remains unchanged. Related requirements REQ-008, REQ-010, REQ-013 and REQ-014 remain open.
+
 **N/A now with reason:** store submission (not a mobile/browser extension product), subscriptions/payments (no checkout), multi-tenant cloud deployment (single localhost prototype). **Applicable specialized tracks:** Windows desktop 08.01, AI agent 08.05 (future tool controls), local-first 08.06 and NUC/edge 08.08.
