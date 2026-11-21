@@ -40,3 +40,9 @@ Get-FileHash dist/OTS-Jarvis.exe -Algorithm SHA256
 - [ ] Windows SmartScreen/Defender observations, dependencies/licensing/unsigned-warning acceptance, real local Qwen, NUC and additional agent-security gates.
 - [ ] Installer/uninstaller/upgrade/restore testing: **N/A for the current portable EXE pilot**; required before a real installer release.
 - **General release status remains NO-GO.** No public GitHub release created. Artifact is temporarily available through GitHub Actions under the passing run, not a production distribution.
+
+## Mandatory final integrated product launch checkpoint (2026-11-20 HST)
+
+- [ ] All FP-01–FP-08 items in [Five-Pillar Launch Gate](FIVE_PILLAR_LAUNCH_GATE.md) passed with actual evidence and owner signoff.
+
+**NO-GO** until Brain, Shield, Decoy, Secured Pathway and Bouncer are verified together. This additional gate does not prohibit isolated development previews, and it cannot be satisfied by a portable EXE build alone.
