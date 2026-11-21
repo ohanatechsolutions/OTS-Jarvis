@@ -32,3 +32,7 @@
 - **VERIFIED CI PILOT BUILD ONLY:** Standard Windows runner success (run `44469707466`), 10,371,842-byte AMD64 PE executable and matching SHA-256, source commit `f09d43bebbae1eb455da989a51c038813ec32ff3` on dedicated build branch. Source socket fix is now being ported to `main`. The executable is **unsigned, non-installer, and not a public release**.
 - `REQ-013`: **IN PROGRESS** (CI build and localhost startup smoke verified; clean Windows UAT and install/uninstall N/A for this portable-exe pilot; installer itself remains NOT STARTED). Do not describe the complete Windows release as ready.
 - Remaining gates: owner double-click browser/enrollment/action testing, independent Defender/SmartScreen observation, real Qwen/NUC testing, broader agent controls, protected multiuser remote access. No new paid dependencies; public standard runner usage is free per GitHub billing documentation.
+
+## 2026-11-20 HST — owner-approved final launch scope
+
+Mandatory checkpoint FP-01–FP-08: [Five-Pillar Launch Gate](FIVE_PILLAR_LAUNCH_GATE.md). Brain, Shield, Decoy, Secured Pathway and Bouncer are locked. **Final integrated launch NO-GO; all five pillar acceptance tests NOT RUN.** Hardware/account setup and integration pending. Existing pilot evidence unchanged. Dedicated RAID/DAS and UPS deferred; minimal pCloud recovery and restore verification required. Next: verify target device capabilities and account types, implement and test isolated integration slices.
