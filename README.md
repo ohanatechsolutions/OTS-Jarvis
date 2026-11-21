@@ -166,6 +166,7 @@ Roadmap boxes describe **repository-verified source functionality** versus work 
 - [ ] **ICF business knowledge and connectors:** Add an approved local knowledge base and supervised Gmail/Sheets/website/TanDM workflows.
 - [ ] **Windows distribution:** Build and independently test a real executable, installation, upgrade, rollback, and integrity verification.
 - [ ] **Optional Impact monitoring:** Design revocable, opt-in local activity analysis and evidence-based time-savings reporting with privacy safeguards.
+- [ ] **Five-pillar integrated deployment:** Brain (NUC 12), Shield (Firewalla Orange), Decoy (Pi 3 B+ / OpenCanary), Secured Pathway (managed VLAN switch), Bouncer (zero-trust identity). All are mandatory for final launch; see [Five-Pillar Launch Gate](docs/FIVE_PILLAR_LAUNCH_GATE.md). Not yet verified.
 - [ ] **Production acceptance:** Complete browser accessibility, security, backup, privacy, and user-acceptance gates.
 
 For verified status and blockers, refer to [Project Status](docs/PROJECT_STATUS.md). For intended milestones and requirements, refer to [Build Blueprint](docs/BUILD_BLUEPRINT.md).
