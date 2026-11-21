@@ -31,3 +31,7 @@
 - Downloaded executable `OTS-Jarvis.exe` independently inspected: 10,371,842 bytes; `MZ` and `PE\\0\\0` headers, AMD64 machine `0x8664`, PE32+ `0x20b`. SHA-256 `2bc33db96ce172b4900f7ad57b3f876922468e08ec00e88b9007ae6facb30216` matches the workflow-generated checksum. Download ZIP SHA-256 was independently recorded by GitHub: `5457657bfaa116d8c7085a3d34a175908f41e5451f3a83ae9ae6808b90faa393`.
 - **Not run:** clean Windows user-device double-click/login UAT, SmartScreen/Defender reputation, real Jan/Qwen runner, NUC performance, Windows install/uninstall (portable executable, not an installer), multiuser/remote/security production gates. Unsigned. **NO-GO for general release; suitable as a limited pilot for owner-supervised testing**.
 - Prior first Windows build run `44469467231` failed a real duplicate-port security test because Windows allows socket reuse differently. Remediated by `SO_EXCLUSIVEADDRUSE` and disabling address reuse; passing subsequent run `44469707466`. Test was not skipped.
+
+## Five-pillar final launch evidence — 2026-11-20 HST
+
+FP-01–FP-08 acceptance tests: **NOT RUN**. See [Five-Pillar Launch Gate](FIVE_PILLAR_LAUNCH_GATE.md). Scope decision only; no new software, hardware, account or recovery tests. Historical pilot results do not satisfy the new final launch gate.
