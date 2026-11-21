@@ -2,6 +2,8 @@
 
 ## [Unreleased] — v0.1.0a2 action-gateway development
 
+- Locked the five-pillar deployment architecture and mandatory final integrated launch checkpoint (FP-01–FP-08); documentation only, not deployed or verified.
+
 - Added a SQLite-backed, local-only supervised `save_note` action: explicit proposal, preview, approval, atomic execution, cancel, undo and pause/resume controls.
 - Added redacted metadata-only action audit history with a 90-day terminal-event retention policy; active notes remain undoable until removed.
 - Added schema v1→v2 migration, bounded pending actions/notes, duplicate execution prevention and restart recovery for stranded model tasks; duplicate-port launch now fails before changing persisted state.
